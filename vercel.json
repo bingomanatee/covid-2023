@@ -1,8 +1,20 @@
 {
   "crons": [
     {
-      "path": "/api/parse_country",
-      "schedule": "*/15 * * * *"
+      "path": "/api/parse/data/data_country",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path":  "/api/parse_geo_country",
+      "schedule": "0 */12 * * *"
+    },
+    {
+      "path": "/api/parse/data/data_state",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path":  "/api/parse_geo_state",
+      "schedule": "0 */12 * * *"
     }
   ]
 }

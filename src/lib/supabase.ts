@@ -1,12 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
+import { KEY_NAMESPACE } from '~/pages/lib/const'
+import { v5 as uuidV5 } from 'uuid';
 
-const key: string = process.env.SUPABASE_KEY || '';
-const url: string = process.env.SUPABASE_URL || '';
+export function getSupabase() {
+  const key: string = process.env.SUPABASE_KEY || '';
+  const url: string = process.env.SUPABASE_URL || '';
 
-export const supabase = createClient(url, key);
+  return createClient(url, key);
+}
 
 export async function bucketWrite(bucketName: string, folder: string, pathName: string, value: any) {
-  return await supabase
+  return await getSupabase()
     .storage
     .from(bucketName)
     .upload(`${folder}/${pathName}`, value, {
@@ -15,7 +19,7 @@ export async function bucketWrite(bucketName: string, folder: string, pathName: 
 }
 
 export async function bucketKeyExists(bucketName: string, folder: string, pathName: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .storage
     .from(bucketName)
     .list(folder, {
@@ -25,11 +29,15 @@ export async function bucketKeyExists(bucketName: string, folder: string, pathNa
   return data ? data.length > 0 : false;
 }
 
-export async function bucketRead(bucketName: string, folder: string, pathName: string)  {
-  const { data, error } = await supabase
+export async function bucketRead(bucketName: string, folder: string, pathName: string) {
+  const { data, error } = await getSupabase()
     .storage
     .from(bucketName)
     .download(pathName);
 
   return data;
+}
+
+export function locationId(iso3: string, adminLevel2: string) {
+  return uuidV5(`${iso3}-${adminLevel2}location`, KEY_NAMESPACE);
 }
