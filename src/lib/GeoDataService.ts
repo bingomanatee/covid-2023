@@ -1,6 +1,5 @@
 import getRedis from '~/pages/api/redis'
 
-import { supabase } from '~/lib/supabase'
 import Redis from 'ioredis'
 import { NextApiResponse } from 'next'
 
@@ -8,6 +7,7 @@ const COUNTRY_KEY = "geojson/country";
 const STATE_KEY = "geojson/state";
 const FEATURE_STANDIN = 'feature-standin';
 import { chunk } from 'lodash';
+import { getSupabase } from '~/lib/supabase'
 
 export class GeoJsonService {
 
@@ -52,14 +52,14 @@ export class GeoJsonService {
 
   private static async parseStateFeatures(json: Record<string, any>, redisConn?: Redis) {
     const redis = redisConn || getRedis();
-
+    const supabase = getSupabase();
     const { data: shapeStates } = await supabase.from('shape_states').select();
 
     const iso3map = new Map();
 
     const { data: locations } = await supabase.from('locations').select();
 
-    const locMap = locations?.reduce((memo, loc) => {
+    const locMap = locations?.reduce((memo: Map<string, any>, loc: Record<string, any>) => {
       const key = `${loc.iso3} ${loc.admin2}`;
       memo.set(key, loc);
       return memo;
@@ -205,6 +205,7 @@ export class GeoJsonService {
 
   private static async parseCountryFeatures(json: Record<string, any>, redisConn?: Redis) {
     const redis = redisConn || getRedis();
+    const supabase = getSupabase();
     const { data: countryISO3codes } = await supabase.from('locations')
       .select()
       .eq('admin_level', 1);

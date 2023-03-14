@@ -1,5 +1,5 @@
-import { getSupabase } from '~/lib/supabase'
-import { KEY_NAMESPACE } from '~/pages/lib/const'
+import { getSupabase, locationId, t } from '~/lib/supabase'
+import { KEY_NAMESPACE } from '~/lib/const'
 import { CsvService } from '~/lib/CsvService'
 // @ts-ignore
 import { v5 as uuidV5 } from 'uuid';
@@ -7,22 +7,22 @@ import { isError } from '~/utils'
 
 type genObj = Record<string, any>;
 
-let running = false;
+const running = false;
 
 const MAX_ROWS = 5000;
 const SAVE_ROWS = 400;
 export default async function parse(
-  dataUrl: string
+  dataUrl: string, level: number
 ) {
   const startTime = Date.now();
   const supabase = getSupabase();
 
-  const supabasePools = [getSupabase(), getSupabase(), getSupabase(),getSupabase(), getSupabase(), getSupabase(),getSupabase(), getSupabase(), getSupabase(),getSupabase(), getSupabase(), getSupabase()];
+  const supabasePools = [getSupabase(), getSupabase(), getSupabase(), getSupabase(), getSupabase(), getSupabase(), getSupabase(), getSupabase(), getSupabase(), getSupabase(), getSupabase(), getSupabase()];
 
   let lineCount = 0;
   return new Promise((done, fail) => {
     const buffer: genObj[] = [];
-    let locations = new Map<string, genObj>();
+    const locations = new Map<string, genObj>();
 
     async function saveLocations() {
       try {
@@ -34,52 +34,37 @@ export default async function parse(
       }
     }
 
-    function writeLocationData(finish = false) {
-      if (running && !finish) {
-        return;
+    function addRecordToLocations(row: genObj) {
+      buffer.push(row);
+      if (!(buffer.length % MAX_ROWS)) {
+        console.log(buffer.length, 'rows parsed');
       }
-      running = true;
-      const data = finish ? buffer : (buffer.splice(0, MAX_ROWS));
-      locations = data.reduce((memo: Map<string, genObj>, row) => {
-        if (row.iso_alpha_3 && !memo.has(row.iso_alpha_3)) {
-          let key;
-          try {
-            key = uuidV5(row.iso_alpha_3 + '-location', KEY_NAMESPACE);
-          } catch (err) {
-            if (err instanceof Error) {
-              console.log('uuid error for location:', row.iso_alpha_3, err.message);
-            }
-            return memo;
-          }
 
-          memo.set(row.iso_alpha_3, {
-            id: key,
-            iso3: row.iso_alpha_3,
-            admin1: row.administrative_area_level_1,
-            admin2: row.administrative_area_level_2,
-            admin3: row.administrative_area_level_3,
-            population: row.population || 0,
-            latitude: row.latitude || 0,
-            longitude: row.longitude || 0,
-            admin_level: row.administrative_area_level || 1,
-          });
+      const key = locationId(row.iso_alpha_3, row.administrative_area_level_2);
+      if (!locations.has(key)) {
+        const data = {
+          id: key,
+          iso3: t(row.iso_alpha_3),
+          admin1: t(row.administrative_area_level_1),
+          admin2: t( row.administrative_area_level_2),
+          admin3: t(row.administrative_area_level_3),
+          population: row.population || 0,
+          latitude: row.latitude || 0,
+          longitude: row.longitude || 0,
+          admin_level: row.administrative_area_level || 1,
         }
-        return memo;
-      }, locations);
-      running = false;
-      if (finish) {
-        return saveLocations();
+
+        console.log('setting location for ',
+          row.iso_alpha_3,
+          row.administrative_area_level_2,
+          'as',
+          key,
+          data,
+        );
+
+        locations.set(key, data);
       }
     }
-
-    function addRecordToLocations(record: genObj) {
-      buffer.push(record);
-      if (buffer.length > MAX_ROWS && !running) {
-        writeLocationData();
-      }
-    }
-
-    let savingDeathData = false;
 
     let data: genObj = [];
 
@@ -87,9 +72,12 @@ export default async function parse(
       if (!supabasePools.length) {
         return;
       }
+      // iterate to maximize pool saveDeathData();
       const start = Date.now();
       const supabase = supabasePools.pop();
-      if (!supabase) return;
+      if (!supabase) {
+        return;
+      }
       const rows = data.splice(0, SAVE_ROWS);
       try {
         const result = await supabase.from('location_deaths')
@@ -115,7 +103,6 @@ export default async function parse(
         console.log('saved', rows.length, 'rows in ', duration, 'seconds', rows.length / duration, 'records/second', data.length, 'rows remaining');
 
       } catch (err) {
-        savingDeathData = false;
         isError(err) && console.error('cannot save data: ', err.message);
         throw err;
       }
@@ -123,13 +110,23 @@ export default async function parse(
       if (data.length) {
         saveDeathData();
       } else {
-        const totalDur = (Date.now() - startTime)/1000;
+        const totalDur = (Date.now() - startTime) / 1000;
         console.log('total time: ', totalDur, 'seconds ', lineCount / totalDur, 'overall records/second');
       }
     }
 
-    async function addRecordToData({ id, date, deaths, hosp, iso_alpha_3, administrative_area_level }: genObj) {
-      if (!deaths && !hosp) return;
+    async function addRecordToData({
+                                     id,
+                                     date,
+                                     deaths,
+                                     hosp,
+                                     iso_alpha_3,
+                                     administrative_area_level_2,
+                                     administrative_area_level
+                                   }: genObj) {
+      if (!(deaths || hosp) || !iso_alpha_3) {
+        return;
+      }
 
       let key;
       try {
@@ -141,7 +138,7 @@ export default async function parse(
         return
       }
 
-      const location = uuidV5(iso_alpha_3 + '-location', KEY_NAMESPACE);
+      const location = locationId(iso_alpha_3, administrative_area_level_2);
 
       const row_data = {
         id: key,
@@ -164,19 +161,17 @@ export default async function parse(
         ++lineCount;
         addRecordToLocations(record);
         addRecordToData(record);
-        if (data.length > SAVE_ROWS && supabasePools.length) {
-          saveDeathData()
-        }
       },
       onError: fail,
       onEnd: async () => {
+
         try {
-          await writeLocationData(true);
+          await saveLocations();
         } catch (err) {
           console.log('location data error', err);
         }
         try {
-           saveDeathData();
+          saveDeathData();
         } catch (err) {
           console.log('death data error', err);
         }

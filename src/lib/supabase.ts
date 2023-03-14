@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { KEY_NAMESPACE } from '~/pages/lib/const'
+import { KEY_NAMESPACE } from '~/lib/const'
 import { v5 as uuidV5 } from 'uuid';
 
 export function getSupabase() {
@@ -38,6 +38,12 @@ export async function bucketRead(bucketName: string, folder: string, pathName: s
   return data;
 }
 
-export function locationId(iso3: string, adminLevel2: string) {
-  return uuidV5(`${iso3}-${adminLevel2}location`, KEY_NAMESPACE);
+export function t(arg: unknown) {
+  if (typeof arg !== 'string') {
+    return '';
+  }
+  return arg.trim();
+}
+export function locationId(iso3: string, adminLevel2 = '') {
+  return uuidV5(`${t(iso3)}-${t(adminLevel2)}location`, KEY_NAMESPACE);
 }
