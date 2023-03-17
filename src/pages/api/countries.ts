@@ -6,11 +6,9 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-    console.log('SUM_COUNTRY');
   try {
-    await CountryService.summary('deaths');
-     await CountryService.summary('hops');
-    res.status(200).json({ summarized: true });
+    const countries = await CountryService.countries();
+    res.status(200).json({countries});
   } catch (err) {
     const error = isError(err) ? err.message : 'cannot read data'
     res.status(500).json({ error });
