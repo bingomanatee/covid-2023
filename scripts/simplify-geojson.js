@@ -20,7 +20,8 @@ supabase.from('locations').select().eq('admin_level', 1)
     countries.features =
       countries.features.filter(({ properties: { ADM0_A3 } }) => iso3Map.has(ADM0_A3))
         .map((feature) => {
-          feature.properties = iso3Map.get(feature.properties.ADM0_A3)
+          const {CONTINENT, REGION_WB} = feature.properties;
+          feature.properties = {...iso3Map.get(feature.properties.ADM0_A3), CONTINENT, REGION_WB};
           return feature
         })
 

@@ -94,7 +94,7 @@ const conSize = new Map([
   ["Middle East & North Africa", 1.5],
   ['Asia', 1.8],
   ["Latin America & Caribbean", 1.25],
-  ['Africa', 1.6],
+  ['Africa', 1.3],
   ['North America', 2.25],
   ['South America', 1.8]
 ]);

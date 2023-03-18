@@ -4,8 +4,9 @@ import getRedis from '~/pages/api/redis'
 import { SupabaseClient } from '@supabase/supabase-js'
 import Redis from 'ioredis'
 import { HOURS_IN_MS } from '~/lib/const'
-import { sortBy } from 'lodash'
+import { chunk, sortBy } from 'lodash'
 import { Country } from '~/types'
+import { NextApiResponse } from 'next'
 
 type summaryField = 'deaths' | 'hosp'
 
@@ -50,6 +51,7 @@ export class CountryService {
     if (cached) {
       return JSON.parse(cached);
     }
+    console.log('summarize: generating ', REDIS_KEY);
 
     type row = { location: string, date: string } & Record<string, any>;
     // @ts-ignore
@@ -93,15 +95,14 @@ export class CountryService {
         return list;
       }, []);
 
-      console.log('------- first item:', country.iso3, field, items[0]);
-      console.log('------- last item:', country.iso3, field, items[items.length - 1]);
-
       const start = firstDay.toISOString();
       const out = { ...country, [field]: summary, start };
       await redis.set(REDIS_KEY, JSON.stringify(out), 'PX', HOURS_IN_MS * 8);
       return out;
     } else {
-      return { ...country, [field]: [], start: '' }
+      const out = { ...country, [field]: [], start: '' };
+      await redis.set(REDIS_KEY, JSON.stringify(out), 'PX', HOURS_IN_MS * 8);
+      return out;
     }
   }
 
@@ -115,9 +116,28 @@ export class CountryService {
     return Array.isArray(data) ? sortBy(data, 'iso3') : []
   }
 
-  static async countryInfo({ iso3, id }: { iso3?: string, id?: string }): Promise<CountryInfo> {
-    const supabase = getSupabase();
-    const redis = getRedis();
+  static async countryInfo({
+                             iso3,
+                             id
+                           }: { iso3?: string, id?: string },
+                           supabase?: SupabaseClient | undefined,
+                           redis?: Redis | undefined
+  ):
+    Promise<CountryInfo> {
+    if (!supabase) {
+      supabase = getSupabase();
+    }
+    if (!redis) {
+      redis = getRedis();
+    }
+    if (id) {
+      const REDIS_KEY = `SUMMARY/${id}/summation`;
+      const cached = await redis.get(REDIS_KEY);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    }
+
     let country: Country | undefined;
     if (!id && iso3) {
       const { data, error } = await supabase.from('locations')
@@ -154,8 +174,83 @@ export class CountryService {
       ]);
     const [deaths, hosp] = result;
 
-    return { country, deaths: deaths || null, hosp: hosp || null };
+    const summaryData = { country, deaths: deaths || null, hosp: hosp || null };
+    const REDIS_KEY = `SUMMARY/${id}/summation`;
+    await redis.set(REDIS_KEY, JSON.stringify(summaryData));
+
+    return summaryData;
   }
 
-}
 
+  public static async streamCountry(res: NextApiResponse) {
+
+    const supabase = getSupabase();
+    const redis = getRedis();
+    res.writeHead(200, {
+      'Content-Type': 'application/json'
+    });
+
+    const { data: countries, error } = await supabase.from('locations')
+      .select()
+      .eq('admin_level', 1);
+    if (!countries || error) {
+      throw error || Error('no countries');
+    }
+
+    res.write('[');
+    let written = false;
+
+    const chunks: Country[][] = chunk(countries as Country[], 25);
+
+    for (const chunk of chunks) {
+      const pipe = redis.pipeline();
+      chunk.forEach((country: Country) => {
+        pipe.get(`SUMMARY/${country.id}/summation`);
+      });
+
+      const result = await pipe.exec();
+      console.log('result of ', chunk.slice(0, 2), 'is', result?.slice(0, 2));
+      let index = 0;
+      if (result) {
+        for (const [_err, data] of result) {
+          if (!data) {
+            console.log('no data for', index, 'error is ', _err);
+            const country = chunk[index];
+            const countryData: CountryInfo = await CountryService.countryInfo(country, supabase, redis);
+            if (written) {
+              res.write(',' + JSON.stringify(countryData));
+            } else {
+              res.write(JSON.stringify(countryData));
+            }
+
+            written = true;
+          } else {
+            if (written) {
+              res.write(',' + data);
+            } else {
+              res.write(data);
+            }
+
+            written = true;
+          }
+          ++index;
+        }
+      } else {
+        for (const country of chunk) {
+          const countryData: CountryInfo = await CountryService.countryInfo(country, supabase, redis);
+          if (written) {
+            res.write(',' + JSON.stringify(countryData));
+          } else {
+            res.write(JSON.stringify(countryData));
+          }
+
+          written = true;
+        }
+      }
+
+    }
+    res.write(']');
+
+    res.end();
+  }
+}

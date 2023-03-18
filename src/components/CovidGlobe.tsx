@@ -9,22 +9,12 @@ if (typeof window !== 'undefined') {
   ThreeGlobe = require('three-globe').default;
 }
 
-const moscow = { lat: 55, lon: 33 }
-
 function longFn(country: { properties: { longitude: number } }) {
   return country.properties.longitude;
-  // if (country.properties.iso3 == 'RUS') return moscow.lon;
-  // const [lon, lat, lon2, lat2] = country.bbox;
-
-  // return (lon + lon2)/ 2;
 }
 
 function latFn(country: { properties: { latitude: number } }) {
   return country.properties.latitude;
-  //if (country.properties.iso3 == 'RUS') return moscow.lat;
-  // const [lon, lat, lon2, lat2] = country.bbox;
-
-  // return (lat + lat2)/ 2;
 }
 
 const CovidGlobe = ({
@@ -65,16 +55,16 @@ const CovidGlobe = ({
     return new ThreeGlobe({ animateIn: false })
       .hexPolygonResolution(resolution)
       .hexPolygonMargin(0)
-      // .labelColor('black')
-      //  .labelsData(features)
-      // .labelLat(latFn)
-      // .labelRotation(0)
-      //.labelLng(longFn)
-      // .labelIncludeDot(false)
-      // .labelTypeFace(babbas)
-      //  .labelAltitude(0.02)
-      // .labelSize(labelSize)
-      // .labelText(labelTextFn)
+      .labelColor('black')
+       .labelsData(features)
+      .labelLat(latFn)
+      .labelRotation(0)
+      .labelLng(longFn)
+      .labelIncludeDot(false)
+      .labelTypeFace(babbas)
+       .labelAltitude(0.02)
+      .labelSize(labelSize)
+      .labelText(labelTextFn)
       .globeImageUrl('/img/earth-dark.jpg')
       .hexPolygonColor(colorOf);
   }, [features, resolution, ThreeGlobe]);
