@@ -72,7 +72,7 @@ export default (globalState: Leaf | null) => ({
 
     async login(leaf: Leaf) {
       try {
-        let response = await axios.post('/api/user/login', {
+        const response = await axios.post('/api/user/login', {
           email: leaf.value.email,
           password: leaf.value.password
         });
@@ -98,7 +98,7 @@ export default (globalState: Leaf | null) => ({
 
     async join(leaf: Leaf) {
       try {
-        let response = await axios.post('/api/user/signup', {
+        const response = await axios.post('/api/user/signup', {
           email: leaf.value.email,
           password: leaf.value.password
         });

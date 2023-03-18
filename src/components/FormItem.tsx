@@ -1,6 +1,6 @@
 import { ReactNode, useContext } from 'react'
 import { Box, Text, ResponsiveContext } from 'grommet'
-import { GenericPageProps } from '@lib/types'
+import { GenericPageProps } from '~/types'
 
 
 export default function FormItem({ children, label }: {label: string | ReactNode } & GenericPageProps) {

@@ -7,18 +7,10 @@
     {
       "path": "/api/parse/data/data_state",
       "schedule": "0 */6 * * *"
-    },,
+    },
     {
       "path": "/api/parse/data/sum_country",
       "schedule": "0 */6 * * *"
-    },
-    {
-      "path":  "/api/parse_geo_state",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path":  "/api/parse_geo_country",
-      "schedule": "0 * * * *"
     }
   ]
 }

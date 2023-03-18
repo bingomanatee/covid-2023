@@ -75,7 +75,7 @@ function LoginForm({ state }: LoginFormProps) {
   </Layer>)
 }
 
-export default function UserLogin({}) {
+export default function UserLogin() {
   const [value, setValue] = useState<UserLoginStateValue>({
     password: '',
     password2: '',

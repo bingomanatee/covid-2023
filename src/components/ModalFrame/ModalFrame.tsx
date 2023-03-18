@@ -1,8 +1,8 @@
 import { Box, Button, Heading, ResponsiveContext } from 'grommet'
 import React, { ReactNode, useContext } from 'react'
-import { GenericPageProps } from '@lib/types'
 import Image from 'next/image'
 import styles from './ModalFrame.module.scss';
+import { GenericPageProps } from '~/types'
 
 export default function ModalFrame({
                                      size,

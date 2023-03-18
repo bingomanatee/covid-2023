@@ -10,7 +10,6 @@ import theme from './grommet-theme';
 export default function PageFrame({ children }: GenericPageProps) {
   return (<Grommet theme={theme}>
     <GlobalState>
-      <Sizer>
         <Grid
           rows={['auto', 'auto', 'flex']}
           columns={['100%']}
@@ -24,14 +23,11 @@ export default function PageFrame({ children }: GenericPageProps) {
         >
           <Header/>
           <Navigation/>
-          <Main gridArea="main" pad="medium" fill overflow="scroll">
-            <section id="article-content">
+          <Main gridArea="main"  fill overflow="auto">
               {children}
-            </section>
             <Messages />
           </Main>
         </Grid>
-      </Sizer>
     </GlobalState>
   </Grommet>)
 }

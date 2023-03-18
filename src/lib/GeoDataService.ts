@@ -8,15 +8,13 @@ const STATE_KEY = "geojson/state";
 const FEATURE_STANDIN = 'feature-standin';
 import { chunk } from 'lodash';
 import { getSupabase } from '~/lib/supabase'
+import { stateOrCountry } from '~/types'
 
 export class GeoJsonService {
 
   static async country(host: string) {
     const redis = getRedis();
-    const hasGeoJson = await redis.exists(COUNTRY_KEY);
-    if (!hasGeoJson) {
-      await GeoJsonService.genCountry(host, redis);
-    }
+    await GeoJsonService.genCountry(host, redis);
     const countries = await redis.get(COUNTRY_KEY);
     return countries ? JSON.parse(countries) : null;
   }
@@ -86,15 +84,15 @@ export class GeoJsonService {
       if (feature.geometry?.coordinates) {
         feature.geometry = GeoJsonService.slimCoords(feature.geometry);
       }
-      GeoJsonService.enqueueRedis(feature, key, redis);
+      GeoJsonService.enqueueRedis(feature, key, 'state', redis);
     });
 
     console.log('---- features enqueued');
 
     json.features = [FEATURE_STANDIN];
 
-    await redis.set(STATE_KEY, JSON.stringify(json));
-    await redis.expire(STATE_KEY, 60 * 60 * 4);
+   await redis.set(STATE_KEY, JSON.stringify(json));
+   await redis.expire(STATE_KEY, 60 * 60 * 4);
   }
 
   private static slimCoords(listOrItem: unknown): any {
@@ -118,11 +116,11 @@ export class GeoJsonService {
   private static queuedFeatures: wrProps[] = [];
   private static running?: Record<string, any> = { time: 0, running: true };
 
-  private static enqueueRedis(feature: Record<string, any>, key: string, redis: Redis) {
+  private static enqueueRedis(feature: Record<string, any>, key: string, scope: stateOrCountry , redis: Redis) {
     if (/Mont/.test(key)) {
       console.log('writing feature', key, JSON.stringify(feature));
     }
-    GeoJsonService.queuedFeatures.push({ feature, key, redis });
+    GeoJsonService.queuedFeatures.push({ feature, key, scope, redis});
     GeoJsonService.tryToDequeue();
   }
 
@@ -133,6 +131,56 @@ export class GeoJsonService {
         return GeoJsonService.writeRedisItems(next);
       }
     }
+  }
+
+  public static async streamCountry(res: NextApiResponse) {
+    const redis = getRedis();
+    res.writeHead(200, {
+      'Content-Type': 'application/json'
+    });
+
+    const countryRoot = await redis.get(COUNTRY_KEY)
+    if (!countryRoot) {
+      throw new Error('no country');
+    }
+    const parts = countryRoot.split(`"${FEATURE_STANDIN}"`);
+
+    res.write(parts.shift());
+
+    const keys = await redis.keys(COUNTRY_KEY + '/features/*');
+
+    let written = false;
+    const chunkedKeys = chunk(keys, 20);
+
+    for (const chunked of chunkedKeys) {
+      const process = redis.pipeline();
+      chunked.forEach((key) => {
+        process.get(key);
+      });
+      const exec = await process.exec();
+      if (!written) {
+        console.log('exec:', exec);
+      }
+      if (Array.isArray(exec)) {
+        const data = exec.map(([_err, item]) => item).filter(a => !!a);
+        if (!(Array.isArray(data) && data.length)) {
+          continue;
+        }
+        if (written) {
+          res.write(',' + data.join(','));
+        } else {
+          res.write(data.join(','));
+        }
+
+        written = true;
+      }
+    }
+
+    while (parts.length) {
+      res.write(parts.shift());
+    }
+    console.log('finished');
+    res.end();
   }
 
   public static async streamState(res: NextApiResponse) {
@@ -190,8 +238,10 @@ export class GeoJsonService {
     GeoJsonService.running = running
 
     const pipeline = items[0].redis.pipeline();
+
     items.forEach((item) => {
-      pipeline.set((STATE_KEY + '/features/' + item.key), JSON.stringify(item.feature));
+      const ROOT = item.scope === 'state' ? STATE_KEY : COUNTRY_KEY;
+      pipeline.set((ROOT + '/features/' + item.key), JSON.stringify(item.feature));
     });
 
     await pipeline.exec();
@@ -224,15 +274,27 @@ export class GeoJsonService {
 
     json.features = json.features.filter((feature: Record<string, any>) => iso3map.has(feature.properties.ISO_A3));
     json.features.forEach((feature: Record<string, any>) => {
-      feature.properties = iso3map.get(feature.properties.ISO_A3) || {};
+      const key = feature.properties.ISO_A3;
+      feature.properties = iso3map.get(key) || {};
+      if (feature.geometry?.coordinates) {
+        feature.geometry = GeoJsonService.slimCoords(feature.geometry);
+      }
+      GeoJsonService.enqueueRedis(feature, key, 'country', redis);
     });
+
+    json.features = [FEATURE_STANDIN];
+
     await redis.set(COUNTRY_KEY, JSON.stringify(json));
     await redis.expire(COUNTRY_KEY, 60 * 60 * 4);
+    console.log('first feature:', json.features[0]);
+    console.log('last feature:', json.features[json.features.length - 1]);
+    return json;
   }
 }
 
 type wrProps = {
   feature: Record<string, any>,
   key: string,
+  scope: stateOrCountry,
   redis: Redis
 }

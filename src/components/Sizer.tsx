@@ -6,14 +6,8 @@ import { useEffect } from 'react'
 
 type Props = { state?: any, size?: { width: number, height: number, dynHeight: number } } & GenericPageProps
 
-function Internal({ state, size, children }: Props) {
+function Internal({ size, children }: Props) {
 
-  useEffect(() => {
-    if (state && size?.width && size?.height) {
-      state.do.setWidth(size.width);
-      state.do.setHeight(size.height);
-    }
-  }, [size, state]);
   return (
     <div id="wll-container" className="wll-container">
       <SizeContext.Provider value={size}>{children}</SizeContext.Provider>
@@ -22,6 +16,7 @@ function Internal({ state, size, children }: Props) {
 }
 
 function Sizer({ size, children }: Props) {
+  console.log('--- size:', size);
   return (
     <GlobalStateContext.Consumer>
       {({ state }) => {

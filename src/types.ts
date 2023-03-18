@@ -15,6 +15,8 @@ export type Message = {
   status: string
 }
 
+export type stateOrCountry = 'state' | 'country'
+
 export type GenericPageProps = { children: ReactNode | ReactNodeArray | null };
 
 export type UserObj = {

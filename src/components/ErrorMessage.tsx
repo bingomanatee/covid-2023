@@ -1,5 +1,5 @@
 import { Text } from 'grommet'
-import { GenericPageProps } from '@lib/types'
+import { GenericPageProps } from '~/types'
 
 export default function ErrorMessage({ children }: GenericPageProps) {
 

@@ -9,7 +9,7 @@ export default async function handler(
     console.log('SUM_COUNTRY');
   try {
     await CountryService.summary('deaths');
-     await CountryService.summary('hops');
+     await CountryService.summary('hosp');
     res.status(200).json({ summarized: true });
   } catch (err) {
     const error = isError(err) ? err.message : 'cannot read data'
