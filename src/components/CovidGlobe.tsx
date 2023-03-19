@@ -78,7 +78,7 @@ const CovidGlobe = ({
   return (
     <>
 
-      <Canvas camera={{ fov: 60, position: [-20, -5, 180] }}>
+      <Canvas camera={{ fov: 40, position: [-20, -5, 170] }}>
         <ambientLight color="#cddbfe"/>
         <directionalLight color="#cddbfe"/>
         <pointLight position={[10, 10, 10]}/>

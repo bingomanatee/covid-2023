@@ -30,7 +30,7 @@ const ranges: colorRange[] = [
 ]
 
 
-export function colorOf(scope: stateOrCountry, n: number) {
+export function valueToColor( n: number, scope: stateOrCountry) {
   if (scope === 'state') {
     n *= 2;
   }
