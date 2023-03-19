@@ -14,7 +14,7 @@ export default () => {
   }
   return (
     {
-      $value: { user, width: 0, height: 0, messages: [] },
+      $value: { user, zoom: 250, height: 0, aspect: 1, messages: [] },
       actions: {
         addMessage(leaf: Leaf, message: string | Message) {
           let text = message;

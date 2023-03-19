@@ -7,16 +7,14 @@ import globalStateConfig from '~/lib/globalStateConfig'
 
 export const GlobalStateContext = createContext<{ state: Leaf | null, value: GlobalStateValue }>({
   state: null, value: {
-    width: 0,
-    height: 0,
+    zoom: 100,
     messages: []
   }
-})
+});
 
 export default function GlobalState({ children }: GenericPageProps) {
   const [value, setValue] = useState<GlobalStateValue>({
-    width: 0,
-    height: 0,
+    zoom: 100,
     messages: []
   });
 

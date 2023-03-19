@@ -209,7 +209,6 @@ export class CountryService {
       });
 
       const result = await pipe.exec();
-      console.log('result of ', chunk.slice(0, 2), 'is', result?.slice(0, 2));
       let index = 0;
       if (result) {
         for (const [_err, data] of result) {

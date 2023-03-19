@@ -27,7 +27,7 @@ export type UserObj = {
 
 export type GlobalStateValue = {
   user?: UserObj,
-  width: number,
+  zoom: number,
   height: number,
   messages: Message[]
 }

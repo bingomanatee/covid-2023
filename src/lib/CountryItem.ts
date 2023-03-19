@@ -36,9 +36,9 @@ class CIStatMgr {
 
     if (offset >= this.list.length) {
       console.log(this.ci.country.iso3, 'offset', offset, 'is larger than data set of ', this.list.length);
-      return this.list[this.list.length - 1];
+      return Number(this.list[this.list.length - 1]) || 0;
     }
-    return this.list[offset];
+    return Number(this.list[offset]) || 0;
   }
 }
 

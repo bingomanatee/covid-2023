@@ -3,8 +3,8 @@
 .globe {
   width: 100vw;
   position: absolute;
-  z-index: 100;
+  z-index: 0;
   canvas {
-    z-index: 110 !important;
+    z-index: -100 !important;
   }
 }

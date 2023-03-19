@@ -1,12 +1,12 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import styles from './index.module.scss';
 import CovidGlobe from '~/components/CovidGlobe'
 import CountryItem from '~/lib/CountryItem'
 import { valueToColor } from '~/lib/color'
 import { Forest } from '@wonderlandlabs/forest'
 import { Leaf } from '@wonderlandlabs/forest/lib/Leaf'
-import {castDraft} from 'immer';
 import { cloneDeep } from 'lodash'
+import { GlobalStateContext } from '~/components/GlobalState'
 
 let Globe = () => null;
 if (typeof window !== 'undefined') {
@@ -14,6 +14,8 @@ if (typeof window !== 'undefined') {
 }
 
 export default function Home() {
+
+  const {value: globalValue, state: globalState} = useContext(GlobalStateContext);
 
   const dataManager = useMemo(() => new Forest({
     $value: {
@@ -76,53 +78,20 @@ export default function Home() {
     return () => sub.unsubscribe();
   }, [dataManager]);
 
+/*  useEffect(() => {
+    function onMove () {
+      globalState?.do.changeAspect(containerRef.current);
+    }
+    window.addEventListener('resize', onMove);
+
+    return () => {
+      window.removeEventListener('resize', onMove);
+    }
+  }, []);*/
+
   const containerRef = useRef<HTMLDivElement | null>(null);
-  /*
-    console.log('data manager meta: ', dataManager.getMeta('countryManagers'));
-
-    const [countries, setCountries] = useState({ features: [] });
-
-    const [data, setData] = useState<CountrySummary[]>([]);
-    const [countryManagers, setCountryManagers] = useState<Map<string, CountryItem>>(new Map());
-
-
-    useEffect(() => {
-      // load data
-      fetch('/data/ne_10m_admin_0_countries.simple.geojson.json')
-        .then((res: Response) => res.json())
-        .then(setCountries);
-      fetch('/api/country_data')
-        .then((res: Response) => res.json())
-        .then(setData);
-    }, []);
-
-    useEffect(() => {
-      const map = new Map();
-      console.log('data is', data);
-      data.forEach((item) => {
-        const ci = new CountryItem(item);
-       // console.log('ci is', ci);
-        map.set(ci.country.iso3, ci);
-      });
-
-      setCountryManagers(map);
-    }, [data])
-    */
 
   const colorDate = new Date(2022, 0, 1).toISOString();
-
-  const countryColor = (country: Record<string, any>) => {
-    const { properties: { ADM0_A3, iso3: code } } = country;
-    const iso3 = code || ADM0_A3;
-
-    const manager = countryManagers.get(iso3);
-    if (!manager) {
-      console.log('cannot get manager for ', iso3);
-      return 'black';
-    }
-    const deaths = manager.deaths.valueAtDate(colorDate);
-    return valueToColor(deaths, 'country');
-  }
 
   return <div ref={containerRef}
               style={{ height: `calc(100vh - ${containerRef.current?.offsetTop || 0}px`, overflow: 'hidden' }}
@@ -134,14 +103,6 @@ export default function Home() {
 }
 
 const nf = new Intl.NumberFormat();
-
-
-/*  if (iso3 === 'MEX') {
-    console.log('country:', country);
-  }
-  const numbers = iso3.split('').map(toNum);
-  const color = `rgb(${numbers[0]},${numbers[1]},${numbers[2]})`;
-  return color;*/
 
 const labelSize = (country: Record<string, any>): number => {
   const { properties: { CONTINENT, REGION_WB } } = country;

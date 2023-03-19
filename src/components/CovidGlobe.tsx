@@ -1,7 +1,8 @@
 import Inspector from "./Inspector";
 import { Canvas } from '@react-three/fiber';
-import { useEffect, useMemo } from "react";
+import { useContext, useEffect, useMemo, useRef } from "react";
 import babbas from '~/lib/bebes.json'
+import { GlobalStateContext } from '~/components/GlobalState'
 
 let ThreeGlobe: unknown = null;
 
@@ -20,33 +21,22 @@ function latFn(country: { properties: { latitude: number } }) {
 const CovidGlobe = ({
                       features,
                       labelTextFn,
-                      resolution = 4,
+                      resolution = 3,
                       colorOf,
                       labelSize,
                       currentTime = 0,
                     }: {
   features: Record<string, unknown>[],
-  labelTextFn(arg: unknown) : string,
+  labelTextFn(arg: unknown): string,
   labelSize(arg: unknown): number,
   resolution?: number,
-  colorOf(arg: unknown) : string,
+  colorOf(arg: unknown): string,
   currentTime?: number
 }) => {
-  /*
-    const {
-      $features,
-      $resolution,
-      colorOf,
-      currentTime,
-      $valueSeries,
-      loading,
-      stopLoading,
-      loadIndex,
-      toggleScope,
-      scope,
-      toggling,
-    } = useContext(GlobeContext);
-  */
+  const {
+    value: { zoom, height }
+  } = useContext(GlobalStateContext);
+
   const globe = useMemo(() => {
     if (!ThreeGlobe) {
       return false;
@@ -56,16 +46,16 @@ const CovidGlobe = ({
       .hexPolygonResolution(resolution)
       .hexPolygonMargin(0)
       .labelColor('black')
-       .labelsData(features)
+      .labelsData(features)
       .labelLat(latFn)
       .labelRotation(0)
       .labelLng(longFn)
       .labelIncludeDot(false)
       .labelTypeFace(babbas)
-       .labelAltitude(0.02)
+      .labelAltitude(0.02)
       .labelSize(labelSize)
       .labelText(labelTextFn)
-      .globeImageUrl('/img/earth-dark.jpg')
+      .globeImageUrl('/img/earth-dark-grey.png')
       .hexPolygonColor(colorOf);
   }, [features, resolution, ThreeGlobe]);
 
@@ -75,15 +65,16 @@ const CovidGlobe = ({
     }
   }, [globe, currentTime, features]);
 
+  const position = useMemo(() => ([-20, height, -zoom]), [zoom, height]);
+
   return (
     <>
-
-      <Canvas camera={{ fov: 40, position: [-20, -5, 170] }}>
+      <Canvas camera={{fov: 40}}>
         <ambientLight color="#cddbfe"/>
         <directionalLight color="#cddbfe"/>
-        <pointLight position={[10, 10, 10]}/>
+        <pointLight position={[-200, 10, 10]}/>
         {(
-          <mesh>
+          <mesh position={position}>
             <Inspector>
               <primitive object={globe}/>
             </Inspector>
