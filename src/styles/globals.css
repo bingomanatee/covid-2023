@@ -106,3 +106,7 @@ a {
     color-scheme: dark;
   }
 }
+.value-label {
+  font-family: "San Francisco Light", "Helvetica Neue", sans-serif;
+  font-size: 0.8rem;
+}

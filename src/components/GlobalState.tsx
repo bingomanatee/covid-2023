@@ -3,26 +3,16 @@ import { createContext, useEffect, useMemo, useState } from 'react'
 import { Leaf } from '@wonderlandlabs/forest/lib/Leaf'
 import { GenericPageProps, GlobalStateValue } from '~/types'
 import globalStateConfig from '~/lib/globalStateConfig'
+import { Global } from '@jest/types'
 
-
-export const GlobalStateContext = createContext<{ state: Leaf | null, value: GlobalStateValue }>({
-  state: null, value: {
-    zoom: 100,
-    messages: []
-  }
-});
+// @ts-ignore
+export const GlobalStateContext = createContext<{ value: GlobalStateValue, state: Leaf }>({});
 
 export default function GlobalState({ children }: GenericPageProps) {
-  const [value, setValue] = useState<GlobalStateValue>({
-    zoom: 100,
-    messages: []
-  });
 
-  const state = useMemo(() => {
-        return new Forest(globalStateConfig())
-      },
-      []
-    );
+  const state = useMemo(() => new Forest(globalStateConfig()), []);
+
+  const [value, setValue] = useState<GlobalStateValue>(state.value);
 
   useEffect(() => {
     const sub = state.subscribe(setValue);

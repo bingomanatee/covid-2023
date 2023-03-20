@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import { ReactNodeArray } from 'prop-types'
+import { Dayjs } from 'dayjs'
 
 export type Country = {
   id: string,
@@ -26,8 +27,13 @@ export type UserObj = {
 }
 
 export type GlobalStateValue = {
+  time: number,
+  height: number,
   user?: UserObj,
   zoom: number,
-  height: number,
+  animationStartTime: Dayjs | null,
+  currentTime: Dayjs,
+  endDate: Dayjs,
+  playing: boolean,
   messages: Message[]
 }

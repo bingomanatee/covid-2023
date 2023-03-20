@@ -3,6 +3,8 @@ import { Canvas } from '@react-three/fiber';
 import { useContext, useEffect, useMemo, useRef } from "react";
 import babbas from '~/lib/bebes.json'
 import { GlobalStateContext } from '~/components/GlobalState'
+import TimeLine from '~/components/TimeLine/TimeLine'
+import {Text} from 'grommet';
 
 let ThreeGlobe: unknown = null;
 
@@ -65,16 +67,16 @@ const CovidGlobe = ({
     }
   }, [globe, currentTime, features]);
 
-  const position = useMemo(() => ([-20, height, -zoom]), [zoom, height]);
+  const position: [x: number, y: number, z: number] = useMemo(() => ([-20, height, -zoom]), [zoom, height]);
 
   return (
     <>
       <Canvas camera={{fov: 40}}>
-        <ambientLight color="#cddbfe"/>
-        <directionalLight color="#cddbfe"/>
-        <pointLight position={[-200, 10, 10]}/>
+        <ambientLight color={"#d0baba"}/>
+        <directionalLight color={"#cddbfe"}/>
         {(
           <mesh position={position}>
+            <pointLight position={[-200, 10, 10]}/>
             <Inspector>
               <primitive object={globe}/>
             </Inspector>
@@ -82,6 +84,9 @@ const CovidGlobe = ({
         )}
       </Canvas>
 
+    <Text>
+      <TimeLine />
+    </Text>
     </>
   )
 }

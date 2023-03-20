@@ -25,7 +25,7 @@ export default function Navigation() {
               </Link>
             </Box>
           )
-          : (<Menu style={{zIndex: 1000}}  margin="none"  pad="0" items={[
+          : (<Menu style={{zIndex: 1000}} margin="0" items={[
             {
               icon: <Home />,
               label: 'Home',
