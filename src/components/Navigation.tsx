@@ -1,4 +1,4 @@
-import { Nav, Box, ResponsiveContext, Menu } from 'grommet'
+import { Nav, Box, ResponsiveContext, Menu, Heading } from 'grommet'
 import Link from 'next/link'
 import { Globe, Home, Menu as MenuIcon } from 'grommet-icons'
 import IconPair from './IconPair'
@@ -20,9 +20,9 @@ export default function Navigation() {
               <Link href={"/"}>
                 <IconPair icon={<Home/>}>Home</IconPair>
               </Link>
-              <Link href={"/charts/countries"}>
+              {value.user ? <Link href={"/charts/countries"}>
                 <IconPair icon={<Globe/>}>Countries</IconPair>
-              </Link>
+              </Link> : ''}
             </Box>
           )
           : (<Menu style={{ zIndex: 1000 }} margin="0" items={[
@@ -44,6 +44,9 @@ export default function Navigation() {
             <MenuIcon/>
           </Menu>)
         }
+        <Box flex>
+          <Heading textAlign="center" level="1">Covid mortality over time</Heading>
+        </Box>
         <Box direction="row" gap="medium">
           <ZoomControl/>
           <HeightControl/>
