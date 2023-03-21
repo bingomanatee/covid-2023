@@ -100,8 +100,6 @@ export default function Home() {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const colorDate = new Date(2022, 0, 1).toISOString();
-
   const unix = useMemo(() =>globalValue.currentTime?.unix() || 0, [globalValue.currentTime]);
 
   useEffect(() => {

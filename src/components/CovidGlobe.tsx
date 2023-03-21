@@ -34,18 +34,18 @@ const CovidGlobe = ({
                       colorOf,
                       labelSize,
                       labelTextFn,
+  unix
                     }: {
-  features: Record<string, unknown>[],
+  features: Feature[],
   labelTextFn(arg: unknown, time: Dayjs): string,
   labelSize(arg: unknown): number,
   resolution?: number,
   colorOf(feature: unknown, time: Dayjs): string,
+  unix: number
 }) => {
   const {
-    value: { zoom, height, currentTime }, state
+    value: { zoom, height }
   } = useContext(GlobalStateContext);
-
-  console.log('covid globe: current time is ', currentTime);
 
   const labelData = useMemo(() => features.map(basicClone), [features]);
   const globe = useMemo(() => {
@@ -76,11 +76,10 @@ const CovidGlobe = ({
   useEffect(() => {
     if (globe && features.length) {
 
-      globe.hexPolygonColor((feature: unknown) => colorOf(feature, currentTime))
-        .labelsData([...labelData])
+      globe.labelsData([...labelData])
         .hexPolygonsData(features)
     }
-  }, [globe, currentTime, features]);
+  }, [globe, unix, features]);
 
   const position: [x: number, y: number, z: number] = useMemo(() => ([-20, height, -zoom]), [zoom, height]);
 
