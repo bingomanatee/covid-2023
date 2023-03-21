@@ -54,7 +54,7 @@ const CovidGlobe = ({
     }
     // @ts-ignore
     return new ThreeGlobe({ animateIn: false })
-      .labelColor('black')
+      .labelColor(() => '#FFFFFF')
       .labelsData(labelData)
       .labelLat(latFn)
       .labelRotation(0)

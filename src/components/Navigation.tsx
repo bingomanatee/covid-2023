@@ -25,9 +25,9 @@ export default function Navigation() {
               </Link>
             </Box>
           )
-          : (<Menu style={{zIndex: 1000}} margin="0" items={[
+          : (<Menu style={{ zIndex: 1000 }} margin="0" items={[
             {
-              icon: <Home />,
+              icon: <Home/>,
               label: 'Home',
               onClick() {
                 router.push('/');
@@ -41,11 +41,13 @@ export default function Navigation() {
               }
             }
           ]}>
-            <MenuIcon />
+            <MenuIcon/>
           </Menu>)
         }
-        <ZoomControl/>
-        <HeightControl/>
+        <Box direction="row" gap="medium">
+          <ZoomControl/>
+          <HeightControl/>
+        </Box>
 
         {value.user && (<></>)}
       </Box>
