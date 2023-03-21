@@ -37,3 +37,8 @@ export type GlobalStateValue = {
   playing: boolean,
   messages: Message[]
 }
+
+export type Feature = {
+  properties: Record<string, unknown>,
+  coordinates: unknown[]
+}

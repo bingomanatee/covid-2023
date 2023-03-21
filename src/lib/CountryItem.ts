@@ -28,14 +28,12 @@ class CIStatMgr {
     }
 
     if (this.start.isAfter(date)) {
-      console.log(this.ci.country.iso3, 'date', date.toString(), 'is before', this.start.toString());
       return 0;
     }
 
     const offset = date.diff(this.start, 'days');
 
     if (offset >= this.list.length) {
-      console.log(this.ci.country.iso3, 'offset', offset, 'is larger than data set of ', this.list.length);
       return Number(this.list[this.list.length - 1]) || 0;
     }
     return Number(this.list[offset]) || 0;

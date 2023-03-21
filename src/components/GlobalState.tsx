@@ -3,7 +3,6 @@ import { createContext, useEffect, useMemo, useState } from 'react'
 import { Leaf } from '@wonderlandlabs/forest/lib/Leaf'
 import { GenericPageProps, GlobalStateValue } from '~/types'
 import globalStateConfig from '~/lib/globalStateConfig'
-import { Global } from '@jest/types'
 
 // @ts-ignore
 export const GlobalStateContext = createContext<{ value: GlobalStateValue, state: Leaf }>({});

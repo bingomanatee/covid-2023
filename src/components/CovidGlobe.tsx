@@ -4,7 +4,9 @@ import { useContext, useEffect, useMemo, useRef } from "react";
 import babbas from '~/lib/bebes.json'
 import { GlobalStateContext } from '~/components/GlobalState'
 import TimeLine from '~/components/TimeLine/TimeLine'
-import {Text} from 'grommet';
+import { Text } from 'grommet';
+import { Dayjs } from 'dayjs'
+import { Feature } from "~/types";
 
 let ThreeGlobe: unknown = null;
 
@@ -22,48 +24,50 @@ function latFn(country: { properties: { latitude: number } }) {
 
 const CovidGlobe = ({
                       features,
-                      labelTextFn,
                       resolution = 3,
                       colorOf,
-                      labelSize,
-                      currentTime = 0,
                     }: {
   features: Record<string, unknown>[],
   labelTextFn(arg: unknown): string,
   labelSize(arg: unknown): number,
   resolution?: number,
-  colorOf(arg: unknown): string,
-  currentTime?: number
+  colorOf(feature: unknown, time: Dayjs): string,
 }) => {
   const {
-    value: { zoom, height }
+    value: { zoom, height, currentTime }
   } = useContext(GlobalStateContext);
 
+  console.log('covid globe: current time is ', currentTime);
+
+  const getColor = (feature: unknown) => colorOf(feature, currentTime);
   const globe = useMemo(() => {
     if (!ThreeGlobe) {
       return false;
     }
     // @ts-ignore
     return new ThreeGlobe({ animateIn: false })
+      /*    .labelColor('black')
+          .labelsData(features)
+          .labelLat(latFn)
+          .labelRotation(0)
+          .labelLng(longFn)
+          .labelIncludeDot(false)
+          .labelTypeFace(babbas)
+          .labelAltitude(0.02)
+          .labelSize(labelSize)
+          .labelText(labelTextFn)*/
       .hexPolygonResolution(resolution)
+      .hexPolygonsData(features)
       .hexPolygonMargin(0)
-      .labelColor('black')
-      .labelsData(features)
-      .labelLat(latFn)
-      .labelRotation(0)
-      .labelLng(longFn)
-      .labelIncludeDot(false)
-      .labelTypeFace(babbas)
-      .labelAltitude(0.02)
-      .labelSize(labelSize)
-      .labelText(labelTextFn)
       .globeImageUrl('/img/earth-dark-grey.png')
-      .hexPolygonColor(colorOf);
-  }, [features, resolution, ThreeGlobe]);
+      .hexPolygonColor(getColor);
+  }, [resolution, ThreeGlobe]);
 
   useEffect(() => {
     if (globe && features.length) {
-      globe.hexPolygonsData([...features])
+
+      globe.hexPolygonColor((feature: unknown) => colorOf(feature, currentTime))
+        .hexPolygonsData(features)
     }
   }, [globe, currentTime, features]);
 
@@ -71,7 +75,7 @@ const CovidGlobe = ({
 
   return (
     <>
-      <Canvas camera={{fov: 40}}>
+      <Canvas camera={{ fov: 40 }}>
         <ambientLight color={"#d0baba"}/>
         <directionalLight color={"#cddbfe"}/>
         {(
@@ -84,9 +88,9 @@ const CovidGlobe = ({
         )}
       </Canvas>
 
-    <Text>
-      <TimeLine />
-    </Text>
+      <Text>
+        <TimeLine/>
+      </Text>
     </>
   )
 }

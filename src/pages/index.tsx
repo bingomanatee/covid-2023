@@ -7,6 +7,8 @@ import { Forest } from '@wonderlandlabs/forest'
 import { Leaf } from '@wonderlandlabs/forest/lib/Leaf'
 import { cloneDeep } from 'lodash'
 import { GlobalStateContext } from '~/components/GlobalState'
+import { Feature, GlobalStateValue } from '~/types'
+import dayjs, { Dayjs } from 'dayjs'
 
 let Globe = () => null;
 if (typeof window !== 'undefined') {
@@ -15,15 +17,17 @@ if (typeof window !== 'undefined') {
 
 type HomeStateValue = {
   data: CountrySummary[],
-  geodata: {features: Record<string, unknown>[]}
+  geodata: { features: Feature[] }
+  unix: number
 }
 
 export default function Home() {
-
-  const dataManager = useMemo(() => {
+  const {value: globalValue} = useContext(GlobalStateContext);
+  const state = useMemo(() => {
     const initial: HomeStateValue = {
+      unix: 0,
       data: [],
-      geodata: {features: []},
+      geodata: { features: [] }
     };
 
     return new Forest({
@@ -36,7 +40,7 @@ export default function Home() {
           leaf.setMeta('geodata', cloneDeep(json.features));
         },
 
-        countryColor(leaf: Leaf, country: Record<string, any>) {
+        countryColor(leaf: Leaf, country: Record<string, any>, time?: Dayjs) {
           const { properties: { ADM0_A3, iso3: code } } = country;
           const iso3 = code || ADM0_A3;
 
@@ -45,8 +49,14 @@ export default function Home() {
             console.log('cannot get manager for ', iso3);
             return 'black';
           }
-          const deaths = manager.deaths.valueAtDate(colorDate);
-          return valueToColor(deaths, 'country');
+          const deaths = manager.deaths.valueAtDate(time || globalValue.currentTime);
+          const color = valueToColor(deaths, 'country');
+
+          if (iso3 === 'USA') {
+            console.log('deaths: ', deaths, 'currentTime:', globalValue.currentTime.toISOString(), 'color: ', color);
+          }
+
+          return color;
         },
         labelText(leaf: Leaf, country: Record<string, any>) {
           const { properties: { ADM0_A3, iso3: code } } = country;
@@ -76,24 +86,36 @@ export default function Home() {
     })
   }, []);
 
-  const [value, setValue] = useState<HomeStateValue>(dataManager.value);
+  const [value, setValue] = useState<HomeStateValue>(state.value);
   useEffect(() => {
-    const sub = dataManager.subscribe(setValue);
-    dataManager.do.loadData();
-    dataManager.do.loadCountries();
+    const sub = state.subscribe(setValue);
+    state.do.loadData();
+    state.do.loadCountries();
 
     return () => sub.unsubscribe();
-  }, [dataManager]);
+  }, [state]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const colorDate = new Date(2022, 0, 1).toISOString();
 
+  const unix = useMemo(() =>globalValue.currentTime?.unix() || 0, [globalValue.currentTime]);
+
+  useEffect(() => {
+    if (unix !== value.unix) {
+      state.do.set_unix(unix);
+    }
+  }, [unix]);
+
   return <div ref={containerRef}
               style={{ height: `calc(100vh - ${containerRef.current?.offsetTop || 0}px`, overflow: 'hidden' }}
               className={styles.globe}>{
     (!value.geodata?.features?.length) || (!value.data?.length) || (typeof window === 'undefined') ? '' :
-      <CovidGlobe features={dataManager.getMeta('geodata') || []} colorOf={dataManager.do.countryColor} labelTextFn={dataManager.do.labelText} labelSize={labelSize}/>
+      <CovidGlobe
+        features={state.getMeta('geodata') || []}
+        colorOf={state.do.countryColor}
+        labelTextFn={state.do.labelText}
+        labelSize={labelSize} unix={unix}/>
   }
   </div>
 }
@@ -109,13 +131,6 @@ const labelSize = (country: Record<string, any>): number => {
     return Number(conSize.get(REGION_WB));
   }
   return conSize.get(CONTINENT) || 1;
-}
-
-function toNum(str: string) {
-  const lc = str.toLowerCase()
-  const n = lc.charCodeAt(0);
-  const offset = n - 'a'.charCodeAt(0);
-  return Math.floor(255 * offset / 26);
 }
 
 const conSize = new Map([
