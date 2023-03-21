@@ -22,51 +22,62 @@ function latFn(country: { properties: { latitude: number } }) {
   return country.properties.latitude;
 }
 
+const basicClone = (feature: Feature) => {
+  const properties = { ...feature.properties };
+  const coordinates: any[] = [];
+  return { properties, coordinates }
+}
+
 const CovidGlobe = ({
                       features,
                       resolution = 3,
                       colorOf,
+                      labelSize,
+                      labelTextFn,
                     }: {
   features: Record<string, unknown>[],
-  labelTextFn(arg: unknown): string,
+  labelTextFn(arg: unknown, time: Dayjs): string,
   labelSize(arg: unknown): number,
   resolution?: number,
   colorOf(feature: unknown, time: Dayjs): string,
 }) => {
   const {
-    value: { zoom, height, currentTime }
+    value: { zoom, height, currentTime }, state
   } = useContext(GlobalStateContext);
 
   console.log('covid globe: current time is ', currentTime);
 
-  const getColor = (feature: unknown) => colorOf(feature, currentTime);
+  const labelData = useMemo(() => features.map(basicClone), [features]);
   const globe = useMemo(() => {
     if (!ThreeGlobe) {
       return false;
     }
     // @ts-ignore
     return new ThreeGlobe({ animateIn: false })
-      /*    .labelColor('black')
-          .labelsData(features)
-          .labelLat(latFn)
-          .labelRotation(0)
-          .labelLng(longFn)
-          .labelIncludeDot(false)
-          .labelTypeFace(babbas)
-          .labelAltitude(0.02)
-          .labelSize(labelSize)
-          .labelText(labelTextFn)*/
+      .labelColor('black')
+      .labelsData(labelData)
+      .labelLat(latFn)
+      .labelRotation(0)
+      .labelLng(longFn)
+      .labelIncludeDot(false)
+      .labelTypeFace(babbas)
+      .labelAltitude(0.02)
+      .labelSize(labelSize)
+      .labelText(labelTextFn)
+      .labelRotation(0)
+      .labelsTransitionDuration(0)
       .hexPolygonResolution(resolution)
       .hexPolygonsData(features)
       .hexPolygonMargin(0)
       .globeImageUrl('/img/earth-dark-grey.png')
-      .hexPolygonColor(getColor);
+      .hexPolygonColor(colorOf);
   }, [resolution, ThreeGlobe]);
 
   useEffect(() => {
     if (globe && features.length) {
 
       globe.hexPolygonColor((feature: unknown) => colorOf(feature, currentTime))
+        .labelsData([...labelData])
         .hexPolygonsData(features)
     }
   }, [globe, currentTime, features]);

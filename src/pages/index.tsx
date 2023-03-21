@@ -7,8 +7,8 @@ import { Forest } from '@wonderlandlabs/forest'
 import { Leaf } from '@wonderlandlabs/forest/lib/Leaf'
 import { cloneDeep } from 'lodash'
 import { GlobalStateContext } from '~/components/GlobalState'
-import { Feature, GlobalStateValue } from '~/types'
-import dayjs, { Dayjs } from 'dayjs'
+import { Feature } from '~/types'
+import  { Dayjs } from 'dayjs'
 
 let Globe = () => null;
 if (typeof window !== 'undefined') {
@@ -22,7 +22,7 @@ type HomeStateValue = {
 }
 
 export default function Home() {
-  const {value: globalValue} = useContext(GlobalStateContext);
+  const {value: globalValue, state: globalState } = useContext(GlobalStateContext);
   const state = useMemo(() => {
     const initial: HomeStateValue = {
       unix: 0,
@@ -40,7 +40,7 @@ export default function Home() {
           leaf.setMeta('geodata', cloneDeep(json.features));
         },
 
-        countryColor(leaf: Leaf, country: Record<string, any>, time?: Dayjs) {
+        countryColor(leaf: Leaf, country: Record<string, any>) {
           const { properties: { ADM0_A3, iso3: code } } = country;
           const iso3 = code || ADM0_A3;
 
@@ -49,7 +49,7 @@ export default function Home() {
             console.log('cannot get manager for ', iso3);
             return 'black';
           }
-          const deaths = manager.deaths.valueAtDate(time || globalValue.currentTime);
+          const deaths = manager.deaths.valueAtDate(globalState.value.currentTime);
           const color = valueToColor(deaths, 'country');
 
           if (iso3 === 'USA') {
@@ -66,9 +66,12 @@ export default function Home() {
             console.log('cannot get manager for ', iso3);
             return iso3
           }
-          const deaths = manager.deaths.valueAtDate(colorDate);
-          return `${iso3} - ${nf.format(deaths)} deaths`
-          return iso3
+          const deaths = manager.deaths.valueAtDate(globalState.value.currentTime);
+          const label = `${iso3} - ${nf.format(deaths)} deaths`
+          if (iso3 === 'USA') {
+            // console.log('label for deaths: ', deaths, 'currentTime:', globalValue.currentTime.toString(), 'label: ', label);
+          }
+          return label
         },
         async loadData(leaf: Leaf) {
           const response = await fetch('/api/country_data');
