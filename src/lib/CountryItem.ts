@@ -14,8 +14,8 @@ type CountryMgr = {
 }
 
 class CIStatMgr {
-  private start: dayjs.Dayjs
-  private list: number[]
+  private readonly start: dayjs.Dayjs
+  private readonly list: number[]
 
   constructor(private ci: CountryMgr, stat: Stat, field: hospOrDeath) {
     this.list = stat[field] || []
