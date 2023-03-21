@@ -2,15 +2,15 @@
   "crons": [
     {
       "path": "/api/parse/data/data_country",
-      "schedule": "* 0 * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/parse/data/data_state",
-      "schedule": "* 1 * * *"
+      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/parse/data/sum_country",
-      "schedule": "* 2 * * *"
+      "schedule": "0 2 * * *"
     }
   ]
 }
