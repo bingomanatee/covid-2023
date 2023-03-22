@@ -13,47 +13,52 @@ export default function Navigation() {
   const size = useContext(ResponsiveContext);
   const router = useRouter();
   return (
-    <Nav pad="small" direction="row">
-      <Box direction="row" justify="between" fill="horizontal">
-        {size === 'large' ? (
-            <Box direction="row" gap="large">
-              <Link href={"/"}>
-                <IconPair icon={<Home/>}>Home</IconPair>
-              </Link>
-              {value.user ? <Link href={"/charts/countries"}>
-                <IconPair icon={<Globe/>}>Countries</IconPair>
-              </Link> : ''}
+    <>
+      <Nav pad="small" direction="row">
+        <Box direction="row" justify="between" fill="horizontal">
+          {size === 'large' ? (
+              <Box direction="row" gap="large">
+                <Link href={"/"}>
+                  <IconPair icon={<Home/>}>Home</IconPair>
+                </Link>
+                {value.user ? <Link href={"/charts/countries"}>
+                  <IconPair icon={<Globe/>}>Countries</IconPair>
+                </Link> : ''}
+              </Box>
+            )
+            : (<Menu style={{ zIndex: 1000 }} margin="0" items={[
+              {
+                icon: <Home/>,
+                label: 'Home',
+                onClick() {
+                  router.push('/');
+                }
+              },
+              {
+                icon: <Globe/>,
+                label: 'Countries',
+                onClick() {
+                  router.push('/countries');
+                }
+              }
+            ]}>
+              <MenuIcon/>
+            </Menu>)
+          }
+          {(size === 'small') ? "" : (
+            <Box flex>
+              <Heading textAlign="center" level="1">Covid mortality over time</Heading>
             </Box>
-          )
-          : (<Menu style={{ zIndex: 1000 }} margin="0" items={[
-            {
-              icon: <Home/>,
-              label: 'Home',
-              onClick() {
-                router.push('/');
-              }
-            },
-            {
-              icon: <Globe/>,
-              label: 'Countries',
-              onClick() {
-                router.push('/countries');
-              }
-            }
-          ]}>
-            <MenuIcon/>
-          </Menu>)
-        }
-        <Box flex>
-          <Heading textAlign="center" level="1">Covid mortality over time</Heading>
+          )}
+          <Box direction="row" gap="medium">
+            <ZoomControl/>
+            <HeightControl/>
+          </Box>
         </Box>
-        <Box direction="row" gap="medium">
-          <ZoomControl/>
-          <HeightControl/>
-        </Box>
-
-        {value.user && (<></>)}
-      </Box>
-    </Nav>
+      </Nav>
+      {(size !== 'small') ? "" : (
+        <Heading textAlign="center" level="1">Covid mortality over time</Heading>
+      )}
+    </>
   )
 }

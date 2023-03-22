@@ -1,12 +1,4 @@
 {
   "crons": [
-    {
-      "path": "/api/parse/data/data_country",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/parse/data/sum_country",
-      "schedule": "0 2 * * *"
-    }
   ]
 }
